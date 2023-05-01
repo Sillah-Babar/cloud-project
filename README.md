@@ -1,7 +1,7 @@
 # cloud-project
 # use bash terminal
 
-python -m venv /env
+python -m venv env/
 
 source env/scripts/activate
 
