@@ -5,7 +5,7 @@ python -m venv env/
 
 source env/scripts/activate
 
-pip install -r requirement.txt
+pip install -r requirements.txt
 
 python app.py
 
