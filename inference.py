@@ -974,6 +974,88 @@ def build(img_c=3, img_w=100, img_h=50, frames_n=75, absolute_max_string_len=29,
 
         model = Model(inputs=[input_data, labels, input_length, label_length], outputs=loss_out)
         return model
+from tensorflow import keras
+from tensorflow.keras import layers
+def transformer_encoder(inputs, head_size, num_heads, ff_dim, dropout=0):
+    # Normalization and Attention
+    x = layers.LayerNormalization(epsilon=1e-6)(inputs)
+    x = layers.MultiHeadAttention(
+        key_dim=head_size, num_heads=num_heads, dropout=dropout
+    )(x, x)
+    x = layers.Dropout(dropout)(x)
+    res = x + inputs
+
+    # Feed Forward Part
+    x = layers.LayerNormalization(epsilon=1e-6)(res)
+    x = layers.Conv1D(filters=ff_dim, kernel_size=1, activation="relu")(x)
+    x = layers.Dropout(dropout)(x)
+    x = layers.Conv1D(filters=inputs.shape[-1], kernel_size=1)(x)
+    return x + res
+
+def build_model(
+    input_shape,
+    head_size,
+    num_heads,
+    ff_dim,
+    num_transformer_blocks,
+    mlp_units,
+    dropout=0,
+    mlp_dropout=0,absolute_max_string_len=29, output_size=43):
+  
+    input_data = Input(name='the_input', shape=input_shape, dtype='float32')
+    zero1 = ZeroPadding3D(padding=(1, 2, 2), name='zero1')(input_data)
+    conv1 = Conv3D(32, (3, 5, 5), strides=(1, 2, 2), kernel_initializer='he_normal', name='conv1')(zero1)
+    batc1 = BatchNormalization(name='batc1')(conv1)
+    actv1 = Activation('relu', name='actv1')(batc1)
+    drop1 = SpatialDropout3D(0.5)(actv1)
+    maxp1 = MaxPooling3D(pool_size=(1, 2, 2), strides=(1, 2, 2), name='max1')(drop1)
+
+    zero2 = ZeroPadding3D(padding=(1, 2, 2), name='zero2')(maxp1)
+    conv2 = Conv3D(64, (3, 5, 5), strides=(1, 1, 1), kernel_initializer='he_normal', name='conv2')(zero2)
+    batc2 = BatchNormalization(name='batc2')(conv2)
+    actv2 = Activation('relu', name='actv2')(batc2)
+    drop2 = SpatialDropout3D(0.5)(actv2)
+    maxp2 = MaxPooling3D(pool_size=(1, 2, 2), strides=(1, 2, 2), name='max2')(drop2)
+
+    zero3 = ZeroPadding3D(padding=(1, 1, 1), name='zero3')(maxp2)
+    conv3 = Conv3D(96, (3, 3, 3), strides=(1, 1, 1), kernel_initializer='he_normal', name='conv3')(zero3)
+    batc3 = BatchNormalization(name='batc3')(conv3)
+    actv3 = Activation('relu', name='actv3')(batc3)
+    drop3 = SpatialDropout3D(0.5)(actv3)
+    maxp3 = MaxPooling3D(pool_size=(1, 2, 2), strides=(1, 2, 2), name='max3')(drop3)
+
+    inputs = keras.Input(shape=input_shape)
+    x = maxp3
+    for _ in range(num_transformer_blocks):
+        x = transformer_encoder(x, head_size, num_heads, ff_dim, dropout)
+
+    resh1 = TimeDistributed(Flatten())(x)
+
+    gru_1 = Bidirectional(GRU(256, return_sequences=True, kernel_initializer='Orthogonal', name='gru1'), merge_mode='concat')(resh1)
+    gru_2 = Bidirectional(GRU(256, return_sequences=True , kernel_initializer='Orthogonal', name='gru2'), merge_mode='concat')(gru_1)
+
+        # transforms RNN output to character activations:
+    dense1 = Dense(output_size, kernel_initializer='he_normal', name='dense1')(gru_2)
+
+    y_pred = Activation('softmax', name='softmax')(dense1)
+    print("self.y_pred: ",y_pred)
+
+    labels = Input(name='the_labels', shape=[absolute_max_string_len], dtype='float32')
+    print("self.y_pred: ",labels)
+    input_length = Input(name='input_length', shape=[1], dtype='int64')
+    label_length = Input(name='label_length', shape=[1], dtype='int64')
+
+    loss_out = CTC('ctc', [y_pred, labels, input_length, label_length])
+
+    model = Model(inputs=[input_data, labels, input_length, label_length], outputs=loss_out)
+    return model
+
+    # x = layers.GlobalAveragePooling1D(data_format="channels_first")(x)
+    # for dim in mlp_units:
+    #     x = layers.Dense(dim, activation="relu")(x)
+    #     x = layers.Dropout(mlp_dropout)(x)
+    # outputs = layers.Dense(n_classes, activation="softmax")(x)
+    # return keras.Model(inputs, outputs)
 
 # import matplotlib
 # import tensorflow as tf

@@ -4,7 +4,7 @@ from flask import *
 import boto3
 
 import numpy 
-from inference import Video,Decoder,labels_to_text,Spell,tokenizer,token
+from inference import Video,Decoder,labels_to_text,Spell,tokenizer,token,build_model,ctc_lambda_func,CTC
 
 import os
 import matplotlib
@@ -53,38 +53,50 @@ s3 = boto3.client(
 
 def inference(file):
 	adam = Adam(lr=0.0001, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
-
+    # input_shape = (75, 100, 50, 3)
+	# model = build_model(
+    # input_shape,
+    # head_size=10,
+    # num_heads=1,
+    # ff_dim=4,
+    # num_transformer_blocks=1,
+    # mlp_units=[128],
+    # mlp_dropout=0.4,
+    # dropout=0.25,
+	# )
 	#es = tf.keras.callbacks.EarlyStopping(monitor='loss', mode='min', verbose=1,patience=6)
 	#mc = ModelCheckpoint('drive/MyDrive/lipnetWthSil/best_model.h5', monitor='loss', mode='min', verbose=1, save_best_only=True)
     # the loss calc occurs elsewhere, so use a dummy lambda func for the loss
 
-	print(os.path.abspath(os.getcwd()))
-	current_file_path=os.path.join(os.path.abspath(os.getcwd()),'cloud-project')
-	weights_directory=os.path.join(current_file_path,'weights-lipreading')
+	# print(os.path.abspath(os.getcwd()))
+	# current_file_path=os.path.join(os.path.abspath(os.getcwd()),'cloud-project')
+	weights_directory=os.path.join(os.path.abspath(os.getcwd()),'weights-lipreading')
 	weights_path=os.path.join(weights_directory,'best_model.h5')
 	print("Weights_paths: ",weights_path)
-	model= keras.models.load_model(weights_path,compile=False)
-	model.compile(loss={'ctc': lambda y_true, y_pred: y_pred}, optimizer=adam,metrics=['accuracy'])
-	prediction_model = keras.models.Model(model.get_layer(name="the_input").input, model.get_layer(name="softmax").output)
+	
+	# model= keras.models.load_model(weights_path,compile=False)
+	# model.compile(loss={'ctc': lambda y_true, y_pred: y_pred}, optimizer=adam,metrics=['accuracy'])
+	# prediction_model = keras.models.Model(model.get_layer(name="the_input").input, model.get_layer(name="softmax").output)
 
-	CURRENT_PATH = os.path.dirname('D:\\flask_app_upload\\')
-	PREDICT_GREEDY      = False
-	PREDICT_BEAM_WIDTH  = 200
-	PREDICT_DICTIONARY  = os.path.join(CURRENT_PATH,'dictionaries','urdu_sentences.txt')
-	absolute_max_string_len=29
-	output_size=43
+	# CURRENT_PATH = os.path.dirname('D:\\flask_app_upload\\')
+	# PREDICT_GREEDY      = False
+	# PREDICT_BEAM_WIDTH  = 200
+	# PREDICT_DICTIONARY  = os.path.join(CURRENT_PATH,'dictionaries','urdu_sentences.txt')
+	# absolute_max_string_len=29
+	# output_size=43
 
-	video=Video().from_frames(file)
-	spell = Spell(path=PREDICT_DICTIONARY)
-	decoder = Decoder(greedy=PREDICT_GREEDY, beam_width=PREDICT_BEAM_WIDTH,
-                          postprocessors=[labels_to_text, spell.sentence])
+	# video=Video().from_frames(file)
+	# spell = Spell(path=PREDICT_DICTIONARY)
+	# decoder = Decoder(greedy=PREDICT_GREEDY, beam_width=PREDICT_BEAM_WIDTH,
+    #                       postprocessors=[labels_to_text, spell.sentence])
 
-	X_data       = np.array([video.data]).astype(np.float32) /255
-	input_length = np.array([len(video.data)])
+	# X_data       = np.array([video.data]).astype(np.float32) /255
+	# input_length = np.array([len(video.data)])
   
-	y_pred         = prediction_model.predict(X_data)
-	result         = decoder.decode(y_pred, input_length)
-	new_result=+'میں'+" "+result[0]
+	# y_pred         = prediction_model.predict(X_data)
+	# result         = decoder.decode(y_pred, input_length)
+	#new_result=+'میں'+" "+result[0]
+	new_result='میں'
 	#new_result=token(new_result)
  	#new_result = tokenizer(result[0])
 
@@ -101,8 +113,10 @@ def main():
 def success():
 	if request.method == 'POST':
 		f = request.files['file']
+		name = request.form['name']
 		f.save(f.filename)
 		print(f.filename)
+		print(name)
 		result=inference(f.filename)
 		return result
 
