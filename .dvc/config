@@ -1,0 +1,4 @@
+[core]
+    remote = weights
+['remote "weights"']
+    url = s3://weights-lipreading/
