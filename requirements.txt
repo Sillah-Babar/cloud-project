@@ -15,3 +15,5 @@ opencv-python
 zarr
 editdistance
 fuzzywuzzy
+dvc
+dvc[s3]
