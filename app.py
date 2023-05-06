@@ -58,7 +58,12 @@ def inference(file):
 	#mc = ModelCheckpoint('drive/MyDrive/lipnetWthSil/best_model.h5', monitor='loss', mode='min', verbose=1, save_best_only=True)
     # the loss calc occurs elsewhere, so use a dummy lambda func for the loss
 
-	model= keras.models.load_model('best_model.h5',compile=False)
+	print(os.path.abspath(os.getcwd()))
+	current_file_path=os.path.join(os.path.abspath(os.getcwd()),'cloud-project')
+	weights_directory=os.path.join(current_file_path,'weights-lipreading')
+	weights_path=os.path.join(weights_directory,'best_model.h5')
+	print("Weights_paths: ",weights_path)
+	model= keras.models.load_model(weights_path,compile=False)
 	model.compile(loss={'ctc': lambda y_true, y_pred: y_pred}, optimizer=adam,metrics=['accuracy'])
 	prediction_model = keras.models.Model(model.get_layer(name="the_input").input, model.get_layer(name="softmax").output)
 
