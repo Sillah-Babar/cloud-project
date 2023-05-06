@@ -1,2 +1,17 @@
 flask
 gunicorn
+keras==2.10.0
+tensorflow==2.10.0
+ffmpeg
+sk-video
+scipy
+mediapipe
+zarr
+h5py
+jiwer
+moviepy
+numpy
+opencv-python
+zarr
+editdistance
+fuzzywuzzy
