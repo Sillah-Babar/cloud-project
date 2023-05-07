@@ -20,6 +20,8 @@ from distutils.log import debug
 from fileinput import filename
 from flask import *
 import boto3
+from flask_cors import CORS
+
 
 import numpy
 from inference import Video, Decoder, labels_to_text, Spell, tokenizer, token, build_model, ctc_lambda_func, CTC
@@ -33,6 +35,7 @@ tf.compat.v1.experimental.output_all_intermediates(True)
 # import the fuzzywuzzy module
 
 app = Flask(__name__)
+CORS(app)
 
 
 # AWS S3 configuration
