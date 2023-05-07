@@ -1,7 +1,4 @@
 flask
-gunicorn
-<<<<<<< HEAD
-=======
 keras==2.10.0
 tensorflow==2.10.0
 scipy
@@ -17,5 +14,4 @@ editdistance
 fuzzywuzzy
 dvc
 dvc[s3]
->>>>>>> 47e14e7dfbe554b5d285f65fb2256b738f39d57f
 boto3
