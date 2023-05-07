@@ -1,0 +1,4 @@
+outs:
+- md5: e516532f4b025192a5407d7b85c9bb5e
+  size: 55270252
+  path: best_model.h5
