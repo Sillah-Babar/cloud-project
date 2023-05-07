@@ -15,3 +15,5 @@ fuzzywuzzy
 dvc
 dvc[s3]
 boto3
+ffmpeg
+sk-video
